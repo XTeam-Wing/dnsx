@@ -467,6 +467,7 @@ func (r *Runner) run() error {
 		r.hm.Scan(func(k, v []byte) error {
 			var dnsdata retryabledns.DNSData
 			if err := json.Unmarshal(v, &dnsdata); err != nil {
+				gologger.Warning().Msgf("could not unmarshal dns data for %s: %s", string(k), err)
 				// the item has no record - ignore
 				return nil
 			}
