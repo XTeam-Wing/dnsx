@@ -498,6 +498,7 @@ func (r *Runner) run() error {
 		seen := make(map[string]struct{})
 		for _, a := range listIPs {
 			hosts := ipDomain[a]
+			gologger.Debug().Msgf("found %d unique hosts for IP %s", len(hosts), a)
 			if len(hosts) >= r.options.WildcardThreshold {
 				for host := range hosts {
 					if _, ok := seen[host]; !ok {
@@ -547,17 +548,8 @@ func (r *Runner) run() error {
 func (r *Runner) lookupAndOutput(host string) error {
 	if r.options.JSON {
 		if data, ok := r.hm.Get(host); ok {
-			var dnsData retryabledns.DNSData
-			err := dnsData.Unmarshal(data)
-			if err != nil {
-				return err
-			}
-			dnsDataJson, err := dnsData.JSON()
-			if err != nil {
-				return err
-			}
-			r.outputchan <- dnsDataJson
-			return err
+			r.outputchan <- string(data)
+			return nil
 		}
 	}
 
