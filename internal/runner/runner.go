@@ -271,6 +271,19 @@ func (r *Runner) prepareInput() error {
 	}
 
 	numHosts := 0
+
+	if r.options.Hosts != "" {
+		if fileutil.FileExists(r.options.Hosts) {
+			f, err := fileutil.ReadFile(r.options.Hosts)
+			if err != nil {
+				return err
+			}
+			for item := range f {
+				numHosts += r.addHostsToHMapFromList([]string{item})
+			}
+		}
+	}
+
 	for item := range sc {
 		item := normalize(item)
 		var hosts []string
@@ -463,6 +476,7 @@ func (r *Runner) run() error {
 		gologger.Print().Msgf("Starting to filter wildcard subdomains\n")
 		ipDomain := make(map[string]map[string]struct{})
 		listIPs := []string{}
+		blackIps := []string{}
 		// prepare in memory structure similarly to shuffledns
 		r.hm.Scan(func(k, v []byte) error {
 			var dnsdata retryabledns.DNSData
@@ -498,7 +512,11 @@ func (r *Runner) run() error {
 		seen := make(map[string]struct{})
 		for _, a := range listIPs {
 			hosts := ipDomain[a]
-			gologger.Debug().Msgf("found %d unique hosts for IP %s", len(hosts), a)
+			if len(hosts) >= 1000 {
+				blackIps = append(blackIps, a)
+				gologger.Debug().Msgf("skipping %s with %d hosts", a, len(hosts))
+				continue
+			}
 			if len(hosts) >= r.options.WildcardThreshold {
 				for host := range hosts {
 					if _, ok := seen[host]; !ok {
@@ -517,6 +535,10 @@ func (r *Runner) run() error {
 		seenRemovedSubdomains := make(map[string]struct{})
 		numRemovedSubdomains := 0
 		for _, A := range listIPs {
+			if len(blackIps) > 0 && sliceutil.Contains(blackIps, A) {
+				numRemovedSubdomains += len(ipDomain[A])
+				continue
+			}
 			for host := range ipDomain[A] {
 				if host == r.options.WildcardDomain {
 					if _, ok := seen[host]; !ok {

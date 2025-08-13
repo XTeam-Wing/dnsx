@@ -255,11 +255,11 @@ func (options *Options) validateOptions() {
 
 	wordListPresent := options.WordList != ""
 	domainsPresent := options.Domains != ""
-	hostsPresent := options.Hosts != ""
+	// hostsPresent := options.Hosts != ""
 
-	if hostsPresent && (wordListPresent || domainsPresent) {
-		gologger.Fatal().Msgf("list(l) flag can not be used domain(d) or wordlist(w) flag")
-	}
+	// if hostsPresent && (wordListPresent || domainsPresent) {
+	// 	gologger.Fatal().Msgf("list(l) flag can not be used domain(d) or wordlist(w) flag")
+	// }
 
 	if wordListPresent && !domainsPresent {
 		gologger.Fatal().Msg("missing domain(d) flag required with wordlist(w) input")
