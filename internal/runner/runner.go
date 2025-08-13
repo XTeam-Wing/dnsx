@@ -483,12 +483,12 @@ func (r *Runner) run() error {
 			return nil
 		})
 
-		gologger.Debug().Msgf("Found %d unique IPs:%s\n", len(listIPs), strings.Join(listIPs, ", "))
+		gologger.Debug().Msgf("found %d unique ip", len(listIPs))
 		// wildcard workers
 		numThreads := r.options.Threads
-		if numThreads > len(listIPs) {
-			numThreads = len(listIPs)
-		}
+		// if numThreads > len(listIPs) {
+		// 	numThreads = len(listIPs)
+		// }
 		for i := 0; i < numThreads; i++ {
 			r.wgwildcardworker.Add(1)
 			go r.wildcardWorker()
@@ -831,6 +831,7 @@ func (r *Runner) outputResponseCode(domain string, responsecode int) {
 }
 
 func (r *Runner) storeDNSData(dnsdata *retryabledns.DNSData) error {
+	dnsdata.RawResp = nil // we do not store raw responses in the database
 	data, err := dnsdata.JSON()
 	if err != nil {
 		return err
